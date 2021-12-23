@@ -1,0 +1,16 @@
+{
+  "botToken": "<YOUR BOT TOKEN HERE>",
+  "botOwnerId": "<BOT OWNER ID>",
+  "botPrefix": "?",
+  "botApplicationCID": "<Bot Application Client ID>",
+  "botApplicationSecret": "<Bot Application Client Secret>",
+  "botApplicationCallback": "http://localhost:5500/api/auth/callback",
+
+  "serverPort": 5500,
+  "serverSessionSecret": "<Random String used as session secret>",
+  "dbHost": "localhost",
+  "dbPort": 3306,
+  "dbUser": "root",
+  "dbPass": "1234",
+  "dbName": "acooldatabase"
+}
