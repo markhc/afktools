@@ -3,7 +3,6 @@ import session from 'express-session';
 import passport from 'passport';
 import helmet from 'helmet';
 import cors from 'cors';
-import chalk from 'chalk';
 import morgan from 'morgan';
 
 import routes from './routes';
@@ -31,11 +30,9 @@ function serverListen() {
   };
 
   console.log(
-    `Starting server instance on port ${chalk.green(
-      config.serverPort
-    )}.\nSecure cookies: ${chalk.bold(
-      sessionInfo.cookie.secure ? chalk.green('yes') : chalk.red('no')
-    )}`
+    `Starting server instance on port ${config.serverPort}.\nSecure cookies: ${
+      sessionInfo.cookie.secure ? 'yes' : 'no'
+    }`
   );
 
   app.use(session(sessionInfo));
@@ -62,7 +59,7 @@ function serverListen() {
 
   app
     .listen(config.serverPort, () => {
-      console.log(chalk.green(`Ready!`));
+      console.log(`Ready!`);
     })
     .on('error', e => {
       console.error(e);

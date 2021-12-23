@@ -1,7 +1,6 @@
 import express from 'express';
 import passport from 'passport';
 import { Strategy as DiscordStrategy } from 'passport-discord';
-import { nextTick } from 'process';
 import { getRepository, Repository } from 'typeorm';
 import config from '../../../config';
 
@@ -105,7 +104,7 @@ async function createNewUser(
     user.role = UserRole.Basic;
   }
 
-  user.avatar = profile.avatar;
+  user.avatar = profile.avatar || '';
   user.email = profile.email;
   user.name = profile.username;
   user.access_token = accessToken;
@@ -119,7 +118,7 @@ async function updateUser(
   profile: DiscordStrategy.Profile,
   accessToken: string
 ) {
-  user.avatar = profile.avatar;
+  user.avatar = profile.avatar || '';
   user.email = profile.email;
   user.name = profile.username;
   user.access_token = accessToken;
