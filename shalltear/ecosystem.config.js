@@ -4,7 +4,7 @@ module.exports = {
   apps: [
     {
       name: 'Shalltear',
-      script: './shalltear/build/index.js',
+      script: './build/index.js',
       autorestart: true,
       env: {
         NODE_ENV: 'development',
