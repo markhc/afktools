@@ -4,7 +4,7 @@ module.exports = {
   apps: [
     {
       name: 'Shalltear',
-      script: './build/index.js',
+      script: './shalltear/build/index.js',
       autorestart: true,
       env: {
         NODE_ENV: 'development',
@@ -29,12 +29,13 @@ module.exports = {
       ],
       ssh_options: 'StrictHostKeyChecking=no',
       ref: 'origin/master',
-      repo: 'git@github.com:markhc/shalltear.git',
-      path: '/home/markhc/shalltear',
+      repo: 'git@github.com:markhc/afktools.git',
+      path: '/home/markhc/afktools',
       'post-deploy':
-        'npm install && \
-        npm run build && \
-        pm2 startOrRestart ecosystem.config.js --env production',
+        'cd ./shalltear && \
+          npm install && \
+          npm run build && \
+          pm2 startOrRestart ecosystem.config.js --env production',
     },
   },
 };
