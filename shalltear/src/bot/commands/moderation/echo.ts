@@ -10,7 +10,8 @@ import Errors from '../../services/Errors';
 
 export default produceCommands('Moderation')({
   name: 'echo',
-  description: 'Kicks a user from this server',
+  description:
+    'Sends a message to the target channel. Defaults to the current channel.',
   guildOnly: true,
   cooldown: 5,
   usage: '[channel] <contents>',
