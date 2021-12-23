@@ -37,10 +37,10 @@ export function removeCommandInvocation(
 
   let content = message.content.trim();
 
-  while (content.startsWith(prefix)) content = content.substr(1);
+  while (content.startsWith(prefix)) content = content.substring(1);
 
   if (content.startsWith(commandName))
-    content = content.substr(commandName.length);
+    content = content.substring(commandName.length);
 
   return content;
 }
