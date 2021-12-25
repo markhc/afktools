@@ -7,7 +7,7 @@ export enum UserRole {
   Owner = 'owner',
 }
 
-@Entity()
+@Entity({ name: 'User' })
 export class User {
   @PrimaryColumn()
   id!: string;

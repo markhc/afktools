@@ -25,7 +25,7 @@ export enum HeroType {
   Intelligence = 'intelligence',
 }
 
-@Entity()
+@Entity({ name: 'Hero' })
 export class Hero {
   @PrimaryGeneratedColumn()
   id!: number;

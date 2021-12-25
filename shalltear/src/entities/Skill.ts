@@ -14,7 +14,7 @@ export enum SkillType {
   Basic = 'basic',
 }
 
-@Entity()
+@Entity({ name: 'Skill' })
 export class Skill {
   @PrimaryGeneratedColumn()
   id!: number;
