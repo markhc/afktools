@@ -8,6 +8,7 @@ import {
   BaseGuildTextChannel,
   CategoryChannel,
   Guild,
+  GuildChannelCreateOptions,
   GuildMember,
   Message,
   MessageActionRow,
@@ -16,10 +17,13 @@ import {
   MessageEmbed,
   PermissionOverwrites,
   Permissions,
+  Role,
   TextBasedChannels,
   TextChannel,
+  VoiceChannel,
 } from 'discord.js';
-import { InteractionTypes } from 'discord.js/typings/enums';
+import { channel } from 'diagnostics_channel';
+import { ChannelTypes } from 'discord.js/typings/enums';
 
 const collectorFilter = {
   filter: (interaction: MessageComponentInteraction) => {
@@ -57,7 +61,7 @@ export default produceCommands('Hunting Fields')({
       }
     }
 
-    message.delete().catch(console.error);
+    //message.delete().catch(console.error);
     sendConfirmationEmbed(channel as TextChannel, channelName, members);
   },
 });
@@ -98,8 +102,8 @@ async function sendConfirmationEmbed(
       const progressMessage = await currentChannel.send('Creating channel...');
 
       createPugChannel(currentChannel, channelName, members)
-        .then(newChannel => {
-          progressMessage.edit(`Channel created: ${newChannel}`);
+        .then(category => {
+          progressMessage.edit(`Channels created. ${category}`);
         })
         .catch(() => {
           progressMessage.edit(`Failed to create channel.`);
@@ -120,9 +124,77 @@ async function createPugChannel(
   currentChannel: TextChannel,
   channelName: string,
   members: GuildMember[]
-): Promise<TextChannel> {
+): Promise<CategoryChannel> {
   const guild = currentChannel.guild;
-  const parent = currentChannel.parent || undefined;
+  const everyoneRole = guild.roles.everyone;
+
+  const teamRole = await guild.roles.create({
+    name: channelName,
+    mentionable: true,
+  });
+
+  let parent = null,
+    announce = null,
+    chat = null,
+    vc = null;
+
+  try {
+    members.forEach(user => {
+      user.roles.add(teamRole);
+    });
+
+    parent = await guild.channels.create(channelName, {
+      type: 'GUILD_CATEGORY',
+      permissionOverwrites: [
+        {
+          id: everyoneRole.id,
+          deny: [
+            Permissions.FLAGS.VIEW_CHANNEL,
+            Permissions.FLAGS.SEND_MESSAGES,
+          ],
+        },
+      ],
+    });
+
+    announce = await doCreateTextChannel(
+      guild,
+      `${channelName}-announce`,
+      parent,
+      teamRole
+    );
+
+    chat = await doCreateTextChannel(
+      guild,
+      `${channelName}-chat`,
+      parent,
+      teamRole
+    );
+
+    vc = await doCreateVoiceChannel(
+      guild,
+      `${channelName}-vc`,
+      parent,
+      teamRole
+    );
+
+    return parent;
+  } catch (ex) {
+    // Clean this mess up
+    // if (vc) vc.delete();
+    if (chat) chat.delete();
+    if (announce) announce.delete();
+    if (parent) parent.delete();
+    if (teamRole) teamRole.delete();
+    throw ex;
+  }
+}
+
+async function doCreateTextChannel(
+  guild: Guild,
+  channelName: string,
+  parent: CategoryChannel,
+  teamRole: Role
+): Promise<TextChannel> {
   const everyoneRole = guild.roles.everyone;
 
   return guild.channels.create(channelName, {
@@ -131,20 +203,66 @@ async function createPugChannel(
     permissionOverwrites: [
       {
         id: everyoneRole.id,
-        deny: [Permissions.FLAGS.VIEW_CHANNEL],
+        deny: [Permissions.FLAGS.VIEW_CHANNEL, Permissions.FLAGS.SEND_MESSAGES],
       },
       {
-        id: '720391291594211409', // Manager role
-        allow: [Permissions.FLAGS.VIEW_CHANNEL],
-      },
-      ...members.map(x => ({
-        id: x.id,
+        id: '927968174647967794', // Strategy role
         allow: [
           Permissions.FLAGS.VIEW_CHANNEL,
           Permissions.FLAGS.SEND_MESSAGES,
-          Permissions.FLAGS.READ_MESSAGE_HISTORY,
         ],
-      })),
+      },
+      {
+        id: '927968283280416779', // Team leader
+        allow: [Permissions.FLAGS.MANAGE_MESSAGES],
+      },
+      {
+        id: teamRole.id, // team role
+        allow: [
+          Permissions.FLAGS.VIEW_CHANNEL,
+          Permissions.FLAGS.SEND_MESSAGES,
+        ],
+      },
+    ],
+  });
+}
+
+async function doCreateVoiceChannel(
+  guild: Guild,
+  channelName: string,
+  parent: CategoryChannel,
+  teamRole: Role
+): Promise<VoiceChannel> {
+  const everyoneRole = guild.roles.everyone;
+
+  return guild.channels.create(channelName, {
+    type: 'GUILD_VOICE',
+    parent: parent,
+    permissionOverwrites: [
+      {
+        id: everyoneRole.id,
+        deny: [
+          Permissions.FLAGS.VIEW_CHANNEL,
+          Permissions.FLAGS.CONNECT,
+          Permissions.FLAGS.SPEAK,
+        ],
+      },
+      {
+        id: '927968174647967794', // Strategy role
+        allow: [
+          Permissions.FLAGS.VIEW_CHANNEL,
+          Permissions.FLAGS.CONNECT,
+          Permissions.FLAGS.SPEAK,
+        ],
+      },
+      {
+        id: teamRole.id, // team role
+        allow: [
+          Permissions.FLAGS.VIEW_CHANNEL,
+          Permissions.FLAGS.CONNECT,
+          Permissions.FLAGS.SPEAK,
+        ],
+      },
     ],
   });
 }
