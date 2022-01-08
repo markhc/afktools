@@ -32,44 +32,85 @@ const collectorFilter = {
   time: 20000,
 };
 
-export default produceCommands('Hunting Fields')({
-  name: 'createpug',
-  description: 'Creates a channel for a pick-up group',
-  guildOnly: true,
-  cooldown: 3,
-  usage: '<name> <members...>',
-  permissions: ['MANAGE_CHANNELS'],
+export default produceCommands('Hunting Fields')(
+  {
+    name: 'createpug',
+    description: 'Creates a channel for a competitive pick-up group.',
+    guildOnly: true,
+    cooldown: 3,
+    usage: '<name> <members...>',
+    permissions: ['MANAGE_CHANNELS'],
 
-  async execute({ message, args, guild, channel }: CommandData) {
-    if (args.length < 2) {
-      return message.reply(
-        'Please provide the name for the group and the members'
-      );
-    }
-
-    let channelName = args[0];
-    let members: GuildMember[] = [];
-
-    for (let i = 1; i < args.length; i++) {
-      try {
-        const guildMember = await resolveGuildMember(guild!, args[i]);
-
-        members.push(guildMember);
-      } catch (err) {
-        message.reply(`Could not resolve member "${args[i]}"`);
-        return;
+    async execute({ message, args, guild, channel }: CommandData) {
+      if (args.length < 2) {
+        return message.reply(
+          'Please provide the name for the group and the members'
+        );
       }
-    }
 
-    //message.delete().catch(console.error);
-    sendConfirmationEmbed(channel as TextChannel, channelName, members);
+      let channelName = args[0];
+      let members: GuildMember[] = [];
+
+      for (let i = 1; i < args.length; i++) {
+        try {
+          const guildMember = await resolveGuildMember(guild!, args[i]);
+
+          members.push(guildMember);
+        } catch (err) {
+          message.reply(`Could not resolve member "${args[i]}"`);
+          return;
+        }
+      }
+
+      //message.delete().catch(console.error);
+      sendConfirmationEmbed(
+        channel as TextChannel,
+        channelName,
+        members,
+        false
+      );
+    },
   },
-});
+  {
+    name: 'createcasualpug',
+    description: 'Creates a channel for a pick-up group',
+    guildOnly: true,
+    cooldown: 3,
+    usage: '<name> <members...>',
+    permissions: ['MANAGE_CHANNELS'],
+
+    async execute({ message, args, guild, channel }: CommandData) {
+      if (args.length < 2) {
+        return message.reply(
+          'Please provide the name for the group and the members'
+        );
+      }
+
+      let channelName = args[0];
+      let members: GuildMember[] = [];
+
+      for (let i = 1; i < args.length; i++) {
+        try {
+          const guildMember = await resolveGuildMember(guild!, args[i]);
+
+          members.push(guildMember);
+        } catch (err) {
+          message.reply(`Could not resolve member "${args[i]}"`);
+          return;
+        }
+      }
+
+      //message.delete().catch(console.error);
+      sendConfirmationEmbed(channel as TextChannel, channelName, members, true);
+    },
+  }
+);
 
 async function sendConfirmationEmbed(
   currentChannel: TextChannel,
   channelName: string,
-  members: GuildMember[]
+  members: GuildMember[],
+  casual: boolean
 ) {
   const embed = new MessageEmbed();
 
@@ -101,8 +142,12 @@ async function sendConfirmationEmbed(
 
       const progressMessage = await currentChannel.send('Creating channel...');
 
-      createPugChannel(currentChannel, channelName, members)
-        .then(category => {
+      let createChannel = createPugChannel as any;
+
+      if (casual) createChannel = createCasualPugChannel;
+
+      createChannel(currentChannel, channelName, members)
+        .then((category: any) => {
           progressMessage.edit(`Channels created. ${category}`);
         })
         .catch(() => {
@@ -117,6 +162,39 @@ async function sendConfirmationEmbed(
 
   collector.on('end', () => {
     confirmationMessage.delete().catch(() => {});
+  });
+}
+
+async function createCasualPugChannel(
+  currentChannel: TextChannel,
+  channelName: string,
+  members: GuildMember[]
+): Promise<TextChannel> {
+  const guild = currentChannel.guild;
+  const parent = currentChannel.parent || undefined;
+  const everyoneRole = guild.roles.everyone;
+
+  return guild.channels.create(channelName, {
+    type: 'GUILD_TEXT',
+    parent: parent,
+    permissionOverwrites: [
+      {
+        id: everyoneRole.id,
+        deny: [Permissions.FLAGS.VIEW_CHANNEL],
+      },
+      {
+        id: '720391291594211409', // Manager role
+        allow: [Permissions.FLAGS.VIEW_CHANNEL],
+      },
+      ...members.map(x => ({
+        id: x.id,
+        allow: [
+          Permissions.FLAGS.VIEW_CHANNEL,
+          Permissions.FLAGS.SEND_MESSAGES,
+          Permissions.FLAGS.READ_MESSAGE_HISTORY,
+        ],
+      })),
+    ],
   });
 }
 
